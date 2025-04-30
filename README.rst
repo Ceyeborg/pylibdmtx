@@ -1,11 +1,12 @@
-Fork of pylibdmtx
+pylibdmtx
 =========
+This is a fork of pylibdmtx that adds the capability to extract extra information from decoder to grade the quality of data matrix barcodes.
 
 Key changes:
 
-- Introduce _pixels_fit_and_raw_data function to extract the fit and raw array from decoder. 
-- Introduce dmtxDecodeGetPixelValue in wrapper.py to extract details on fit and raw arrays. 
-- Introduce sampling_rate argument in decode() function, to control th size of fit and raw arrays. 
+- Introduce _pixels_fit_and_raw_data function to extract the fit and raw array from decoder.
+- Introduce dmtxDecodeGetPixelValue in wrapper.py to extract details on fit and raw arrays.
+- Introduce sampling_rate argument in decode() function, to control th size of fit and raw arrays.
 
 .. image:: https://img.shields.io/badge/python-2.7%2C%203.5%2C%203.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10-blue.svg
     :target: https://github.com/NaturalHistoryMuseum/pylibdmtx
