@@ -8,42 +8,65 @@ from functools import partial
 
 from .pylibdmtx_error import PyLibDMTXError
 from .wrapper import (
-    c_ubyte_p, dmtxImageCreate, dmtxImageDestroy, dmtxDecodeCreate,
-    dmtxDecodeDestroy, dmtxRegionDestroy, dmtxMessageDestroy, dmtxTimeAdd,
-    dmtxTimeNow, dmtxDecodeMatrixRegion, dmtxRegionFindNext,
-    dmtxMatrix3VMultiplyBy, dmtxDecodeSetProp, DmtxPackOrder, DmtxProperty,
-    DmtxUndefined, DmtxVector2, EXTERNAL_DEPENDENCIES,
-    DmtxSymbolSize, DmtxScheme, dmtxEncodeSetProp, dmtxEncodeDataMatrix,
-    dmtxImageGetProp, dmtxEncodeCreate, dmtxEncodeDestroy
+    EXTERNAL_DEPENDENCIES,
+    DmtxPackOrder,
+    DmtxProperty,
+    DmtxScheme,
+    DmtxSymbolSize,
+    DmtxUndefined,
+    DmtxVector2,
+    c_ubyte_p,
+    dmtxDecodeCreate,
+    dmtxDecodeDestroy,
+    dmtxDecodeGetPixelValue,
+    dmtxDecodeMatrixRegion,
+    dmtxDecodeSetProp,
+    dmtxEncodeCreate,
+    dmtxEncodeDataMatrix,
+    dmtxEncodeDestroy,
+    dmtxEncodeSetProp,
+    dmtxImageCreate,
+    dmtxImageDestroy,
+    dmtxImageGetProp,
+    dmtxMatrix3VMultiplyBy,
+    dmtxMessageDestroy,
+    dmtxRegionDestroy,
+    dmtxRegionFindNext,
+    dmtxTimeAdd,
+    dmtxTimeNow,
 )
 
 __all__ = [
-    'decode', 'encode', 'Encoded', 'ENCODING_SCHEME_NAMES',
-    'ENCODING_SIZE_NAMES', 'EXTERNAL_DEPENDENCIES',
+    "decode",
+    "encode",
+    "Encoded",
+    "ENCODING_SCHEME_NAMES",
+    "ENCODING_SIZE_NAMES",
+    "EXTERNAL_DEPENDENCIES",
 ]
 
-ENCODING_SCHEME_PREFIX = 'DmtxScheme'
-ENCODING_SIZE_PREFIX = 'DmtxSymbol'
+ENCODING_SCHEME_PREFIX = "DmtxScheme"
+ENCODING_SIZE_PREFIX = "DmtxSymbol"
 
 ENCODING_SCHEME_NAMES = sorted(
-    n.name[len(ENCODING_SCHEME_PREFIX):] for n in DmtxScheme
+    n.name[len(ENCODING_SCHEME_PREFIX) :] for n in DmtxScheme  # noqa: E203
 )
 
 # Not sorting encoding size names - would need to use natural sort order;
 # the existing order within DmtxSymbolSize is sensible.
 ENCODING_SIZE_NAMES = [
-    n.name[len(ENCODING_SIZE_PREFIX):] for n in DmtxSymbolSize
+    n.name[len(ENCODING_SIZE_PREFIX) :] for n in DmtxSymbolSize  # noqa: E203
 ]
 
 # A rectangle
-Rect = namedtuple('Rect', 'left top width height')
-Rect_vertices = namedtuple('Rect_vertices', 'P0 P1 P2 P3')
+Rect = namedtuple("Rect", "left top width height")
 
 # Results of reading a barcode
-Decoded = namedtuple('Decoded', 'data rect')
+Decoded = namedtuple("Decoded", "data rect")
+DecodedObject = namedtuple("Decoded", "data pixelsFit pixelsRaw")
 
 # Results of encoding data to an image
-Encoded = namedtuple('Encoded', 'width height bpp pixels')
+Encoded = namedtuple("Encoded", "width height bpp pixels")
 
 # Crude mapping from bits-per-pixels to values in DmtxPackOrder enum
 _PACK_ORDER = {
@@ -73,7 +96,7 @@ def _image(pixels, width, height, pack):
     """
     image = dmtxImageCreate(pixels, width, height, pack)
     if not image:
-        raise PyLibDMTXError('Could not create image')
+        raise PyLibDMTXError("Could not create image")
     else:
         try:
             yield image
@@ -98,7 +121,7 @@ def _decoder(image, shrink):
     """
     decoder = dmtxDecodeCreate(image, shrink)
     if not decoder:
-        raise PyLibDMTXError('Could not create decoder')
+        raise PyLibDMTXError("Could not create decoder")
     else:
         try:
             yield decoder
@@ -147,51 +170,75 @@ def _decoded_matrix_region(decoder, region, corrections):
             dmtxMessageDestroy(byref(message))
 
 
-def _decode_region(decoder, region, corrections, shrink, return_vertices=False):
+def _pixels_fit_and_raw_data(decoder, region, shrink, sampling_rate):
+    """Derive pixels data from the region
+
+    :param decoder: decoder yielded from the image input
+    :type decoder: POINTER(DmtxDecode)
+    :param region: region yielded from the decoder
+    :type region: POINTER(DmtxRegion)
+    :param shrink: Scaling with respect to image
+    :type shrink: int
+    :sampling_rate: Number of pixels per module per axis
+    :type sampling_rate: int
+    :return: List of all the pixels in fitted and normal matrix
+    :rtype: tuple
+    """
+    p00 = DmtxVector2()
+    colorTmp = ctypes.c_int(0)
+    dmtx_module_fit = []
+    dmtx_module_raw = []
+    (symbol_rows, symbol_cols) = (
+        region.contents.symbolRows,
+        region.contents.symbolCols,
+    )
+    for row in range(-1, symbol_rows * sampling_rate):
+        dmtx_pixels_fit = []
+        dmtx_pixels_raw = []
+        for col in range(-1, symbol_cols * sampling_rate):
+            p00.X = (1.0 / (symbol_cols * sampling_rate)) * (col)
+            p00.Y = (1.0 / (symbol_rows * sampling_rate)) * (row)
+            row_coordinate = p00.X
+            column_coordinate = p00.Y
+            dmtxMatrix3VMultiplyBy(p00, region.contents.fit2raw)
+            x0 = int((shrink * p00.X) + 0.5)
+            y0 = int((shrink * p00.Y) + 0.5)
+            dmtxDecodeGetPixelValue(
+                decoder,
+                x0,
+                y0,
+                region.contents.flowBegin.plane,
+                byref(colorTmp),
+            )
+            dmtx_pixels_fit.append(
+                (row_coordinate, column_coordinate, colorTmp.value)
+            )
+            dmtx_pixels_raw.append((x0, y0, colorTmp.value))
+        dmtx_module_fit.append(dmtx_pixels_fit)
+        dmtx_module_raw.append(dmtx_pixels_raw)
+    return (dmtx_module_fit, dmtx_module_raw)
+
+
+def _decode_region(decoder, region, corrections, shrink, sampling_rate):
     """Decodes and returns the value in a region.
 
     Args:
         region (DmtxRegion):
 
     Yields:
-        Decoded or None: The decoded value.
+        DecodedObject or None: The decoded value.
     """
     with _decoded_matrix_region(decoder, region, corrections) as msg:
         if msg:
             # Coordinates
-            p00 = DmtxVector2()
-            p11 = DmtxVector2(1.0, 1.0)
-            p10 = DmtxVector2(1.0, 0.0)
-            p01 = DmtxVector2(0.0, 1.0)
-            dmtxMatrix3VMultiplyBy(p00, region.contents.fit2raw)
-            dmtxMatrix3VMultiplyBy(p11, region.contents.fit2raw)
-            dmtxMatrix3VMultiplyBy(p01, region.contents.fit2raw)
-            dmtxMatrix3VMultiplyBy(p10, region.contents.fit2raw)
-            x00 = int((shrink * p00.X) + 0.5)
-            y00 = int((shrink * p00.Y) + 0.5)
-            x11 = int((shrink * p11.X) + 0.5)
-            y11 = int((shrink * p11.Y) + 0.5)
-            x10 = int((shrink * p10.X) + 0.5)
-            y10 = int((shrink * p10.Y) + 0.5)
-            x01 = int((shrink * p01.X) + 0.5)
-            y01 = int((shrink * p01.Y) + 0.5)
-
-            if return_vertices:
-                return Decoded(
-                    string_at(msg.contents.output),
-                    Rect_vertices((x00,y00), (x01,y01), (x10,y10), (x11,y11))
-                )
-            else:
-                min_x = min(x00, x11, x10, x01)
-                max_x = max(x00, x11, x10, x01)
-                min_y = min(y00, y11, y10, y01)
-                max_y = max(y00, y11, y10, y01)
-
-                return Decoded(
-                    string_at(msg.contents.output),
-                    Rect(min_x, min_y, max_x - min_x, max_y - min_y)
-                    )
-
+            (pixels_fit_data, pixels_raw_data) = _pixels_fit_and_raw_data(
+                decoder, region, shrink, sampling_rate
+            )
+            return DecodedObject(
+                string_at(msg.contents.output),
+                pixels_fit_data,
+                pixels_raw_data,
+            )
         else:
             return None
 
@@ -206,14 +253,14 @@ def _pixel_data(image):
     # requiring that cv2, PIL, or imageio are installed.
 
     image_type = str(type(image))
-    if 'PIL.' in image_type:
+    if "PIL." in image_type:
         pixels = image.tobytes()
         width, height = image.size
-    elif 'numpy.ndarray' in image_type or 'imageio.core.util' in image_type:
+    elif "numpy.ndarray" in image_type or "imageio.core.util" in image_type:
         # Different versions of imageio use a subclass of numpy.ndarray
         # called either imageio.core.util.Image or imageio.core.util.Array.
-        if 'uint8' != str(image.dtype):
-            image = image.astype('uint8')
+        if "uint8" != str(image.dtype):
+            image = image.astype("uint8")
         try:
             pixels = image.tobytes()
         except AttributeError:
@@ -229,8 +276,8 @@ def _pixel_data(image):
         if 0 != len(pixels) % (width * height):
             raise PyLibDMTXError(
                 (
-                    'Inconsistent dimensions: image data of {0} bytes is not '
-                    'divisible by (width x height = {1})'
+                    "Inconsistent dimensions: image data of {0} bytes is not "
+                    "divisible by (width x height = {1})"
                 ).format(len(pixels), (width * height))
             )
 
@@ -238,7 +285,7 @@ def _pixel_data(image):
     bpp = 8 * len(pixels) // (width * height)
     if bpp not in _PACK_ORDER:
         raise PyLibDMTXError(
-            'Unsupported bits-per-pixel: [{0}] Should be one of {1}'.format(
+            "Unsupported bits-per-pixel: [{0}] Should be one of {1}".format(
                 bpp, sorted(_PACK_ORDER.keys())
             )
         )
@@ -246,13 +293,25 @@ def _pixel_data(image):
     return pixels, width, height, bpp
 
 
-def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
-           deviation=None, threshold=None, min_edge=None, max_edge=None,
-           corrections=None, max_count=None, return_vertices=False):
+def decode(
+    image,
+    sampling_rate=10,
+    timeout=None,
+    gap_size=None,
+    shrink=1,
+    shape=None,
+    deviation=None,
+    threshold=None,
+    min_edge=None,
+    max_edge=None,
+    corrections=None,
+    max_count=None,
+):
     """Decodes datamatrix barcodes in `image`.
 
     Args:
         image: `numpy.ndarray`, `PIL.Image` or tuple (pixels, width, height)
+        sampling_rate(int): Number of pixels per module per axis (default: 10)
         timeout (int): milliseconds
         gap_size (int):
         shrink (int):
@@ -264,7 +323,6 @@ def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
         corrections (int):
         max_count (int): stop after reading this many barcodes. `None` to read
             as many as possible.
-        return_vertices: If to return the coordinates of the four vertices of the datamatrix or just one + width/height
 
     Returns:
         :obj:`list` of :obj:`Decoded`: The values decoded from barcodes.
@@ -275,7 +333,7 @@ def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
         dmtx_timeout = dmtxTimeAdd(now, timeout)
 
     if max_count is not None and max_count < 1:
-        raise ValueError('Invalid max_count [{0}]'.format(max_count))
+        raise ValueError("Invalid max_count [{0}]".format(max_count))
 
     pixels, width, height, bpp = _pixel_data(image)
 
@@ -290,11 +348,13 @@ def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
                 (DmtxProperty.DmtxPropSquareDevn, deviation),
                 (DmtxProperty.DmtxPropEdgeThresh, threshold),
                 (DmtxProperty.DmtxPropEdgeMin, min_edge),
-                (DmtxProperty.DmtxPropEdgeMax, max_edge)
+                (DmtxProperty.DmtxPropEdgeMax, max_edge),
             ]
 
             # Set only those properties with a non-None value
-            for prop, value in ((p, v) for p, v in properties if v is not None):
+            for prop, value in (
+                (p, v) for p, v in properties if v is not None
+            ):
                 dmtxDecodeSetProp(decoder, prop, value)
 
             if not corrections:
@@ -309,7 +369,7 @@ def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
                     else:
                         # Decoded
                         res = _decode_region(
-                            decoder, region, corrections, shrink, return_vertices
+                            decoder, region, corrections, shrink, sampling_rate
                         )
                         if res:
                             results.append(res)
@@ -325,7 +385,7 @@ def decode(image, timeout=None, gap_size=None, shrink=1, shape=None,
 def _encoder():
     encoder = dmtxEncodeCreate()
     if not encoder:
-        raise PyLibDMTXError('Could not create encoder')
+        raise PyLibDMTXError("Could not create encoder")
 
     try:
         yield encoder
@@ -354,23 +414,21 @@ def encode(data, scheme=None, size=None):
 
     """
 
-    size = size if size else 'ShapeAuto'
-    size_name = '{0}{1}'.format(ENCODING_SIZE_PREFIX, size)
+    size = size if size else "ShapeAuto"
+    size_name = "{0}{1}".format(ENCODING_SIZE_PREFIX, size)
     if not hasattr(DmtxSymbolSize, size_name):
         raise PyLibDMTXError(
-            'Invalid size [{0}]: should be one of {1}'.format(
+            "Invalid size [{0}]: should be one of {1}".format(
                 size, ENCODING_SIZE_NAMES
             )
         )
     size = getattr(DmtxSymbolSize, size_name)
 
-    scheme = scheme if scheme else 'Ascii'
-    scheme_name = '{0}{1}'.format(
-        ENCODING_SCHEME_PREFIX, scheme.capitalize()
-    )
+    scheme = scheme if scheme else "Ascii"
+    scheme_name = "{0}{1}".format(ENCODING_SCHEME_PREFIX, scheme.capitalize())
     if not hasattr(DmtxScheme, scheme_name):
         raise PyLibDMTXError(
-            'Invalid scheme [{0}]: should be one of {1}'.format(
+            "Invalid scheme [{0}]: should be one of {1}".format(
                 scheme, ENCODING_SCHEME_NAMES
             )
         )
@@ -380,18 +438,22 @@ def encode(data, scheme=None, size=None):
         dmtxEncodeSetProp(encoder, DmtxProperty.DmtxPropScheme, scheme)
         dmtxEncodeSetProp(encoder, DmtxProperty.DmtxPropSizeRequest, size)
 
-        if dmtxEncodeDataMatrix(encoder, len(data), cast(data, c_ubyte_p)) == 0:
+        if (
+            dmtxEncodeDataMatrix(encoder, len(data), cast(data, c_ubyte_p))
+            == 0
+        ):
             raise PyLibDMTXError(
-                'Could not encode data, possibly because the image is not '
-                'large enough to contain the data'
+                "Could not encode data, possibly because the image is not "
+                "large enough to contain the data"
             )
 
         w, h, bpp = map(
             partial(dmtxImageGetProp, encoder[0].image),
             (
-                DmtxProperty.DmtxPropWidth, DmtxProperty.DmtxPropHeight,
-                DmtxProperty.DmtxPropBitsPerPixel
-            )
+                DmtxProperty.DmtxPropWidth,
+                DmtxProperty.DmtxPropHeight,
+                DmtxProperty.DmtxPropBitsPerPixel,
+            ),
         )
         size = w * h * bpp // 8
         pixels = cast(

@@ -1,32 +1,51 @@
 """Low-level wrapper around libdmtx's interface
 """
 from ctypes import (
-    c_double, c_int, c_long, c_size_t, c_ubyte, c_uint, c_ulong,
-    c_ulonglong, c_char_p, Structure, CFUNCTYPE, POINTER
+    CFUNCTYPE,
+    POINTER,
+    Structure,
+    c_char_p,
+    c_double,
+    c_int,
+    c_long,
+    c_size_t,
+    c_ubyte,
+    c_uint,
+    c_ulong,
+    c_ulonglong,
 )
+from distutils.version import LooseVersion
 from enum import IntEnum, unique
-from packaging import version
 
 from . import dmtx_library
 
-
 __all__ = [
-    'DmtxPassFail', 'DmtxUndefined', 'DmtxVector2', 'EXTERNAL_DEPENDENCIES',
-    'LIBDMTX', 'c_ubyte_p', 'dmtxImageCreate', 'dmtxImageDestroy',
-    'dmtxDecodeCreate', 'dmtxDecodeDestroy', 'dmtxRegionDestroy',
-    'dmtxMessageDestroy', 'dmtxTimeAdd', 'dmtxMatrix3VMultiplyBy',
-    'dmtxDecodeSetProp', 'DmtxPackOrder', 'DmtxProperty', 'dmtxTimeNow',
-    'dmtxDecodeMatrixRegion', 'dmtxRegionFindNext'
+    "DmtxPassFail",
+    "DmtxUndefined",
+    "DmtxVector2",
+    "EXTERNAL_DEPENDENCIES",
+    "LIBDMTX",
+    "c_ubyte_p",
+    "dmtxImageCreate",
+    "dmtxImageDestroy",
+    "dmtxDecodeCreate",
+    "dmtxDecodeDestroy",
+    "dmtxRegionDestroy",
+    "dmtxMessageDestroy",
+    "dmtxTimeAdd",
+    "dmtxMatrix3VMultiplyBy",
+    "dmtxDecodeSetProp",
+    "DmtxPackOrder",
+    "DmtxProperty",
+    "dmtxTimeNow",
+    "dmtxDecodeMatrixRegion",
+    "dmtxRegionFindNext",
 ]
 
 # Globals populated in load_libdmtx
 LIBDMTX = None
-"""ctypes.CDLL
-"""
 
 EXTERNAL_DEPENDENCIES = []
-"""List of instances of ctypes.CDLL. Helpful when freezing.
-"""
 
 
 def load_libdmtx():
@@ -61,14 +80,13 @@ def libdmtx_function(fname, restype, *args):
 
 # Types
 c_ubyte_p = POINTER(c_ubyte)
-"""unsigned char* type
-"""
+# c_double_p = POINTER(c_double)
 
 # Defines and enums
 DmtxUndefined = -1
 
 # Define this function early so that it can be used in the definitions below.
-_dmtxVersion = libdmtx_function('dmtxVersion', c_char_p)
+_dmtxVersion = libdmtx_function("dmtxVersion", c_char_p)
 
 
 def dmtxVersion():
@@ -196,357 +214,353 @@ DmtxMatrix3 = c_double * 3 * 3
 
 
 # Structs
-if version.parse(dmtxVersion()) < version.parse('0.7.5'):
+if LooseVersion(dmtxVersion()) < LooseVersion("0.7.5"):
+
     class DmtxMessage(Structure):
         _fields_ = [
-            ('arraySize', c_size_t),
-            ('codeSize', c_size_t),
-            ('outputSize', c_size_t),
-            ('outputIdx', c_int),
-            ('padCount', c_int),
-            ('array', c_ubyte_p),
-            ('code', c_ubyte_p),
-            ('output', c_ubyte_p),
+            ("arraySize", c_size_t),
+            ("codeSize", c_size_t),
+            ("outputSize", c_size_t),
+            ("outputIdx", c_int),
+            ("padCount", c_int),
+            ("array", c_ubyte_p),
+            ("code", c_ubyte_p),
+            ("output", c_ubyte_p),
         ]
+
 else:
+
     class DmtxMessage(Structure):
         _fields_ = [
-            ('arraySize', c_size_t),
-            ('codeSize', c_size_t),
-            ('outputSize', c_size_t),
-            ('outputIdx', c_int),
-            ('padCount', c_int),
-            ('fnc1', c_int),           # libdmtx 0.7.5 inserts this field
-            ('array', c_ubyte_p),
-            ('code', c_ubyte_p),
-            ('output', c_ubyte_p),
+            ("arraySize", c_size_t),
+            ("codeSize", c_size_t),
+            ("outputSize", c_size_t),
+            ("outputIdx", c_int),
+            ("padCount", c_int),
+            ("fnc1", c_int),  # libdmtx 0.7.5 inserts this field
+            ("array", c_ubyte_p),
+            ("code", c_ubyte_p),
+            ("output", c_ubyte_p),
         ]
 
 
 class DmtxImage(Structure):
     _fields_ = [
-        ('width', c_int),
-        ('height', c_int),
-        ('pixelPacking', c_int),
-        ('bitsPerPixel', c_int),
-        ('bytesPerPixel', c_int),
-        ('rowPadBytes', c_int),
-        ('rowSizeBytes', c_int),
-        ('imageFlip', c_int),
-        ('channelCount', c_int),
-        ('channelStart', c_int * 4),
-        ('bitsPerChannel', c_int * 4),
-        ('pxl', c_ubyte_p)
+        ("width", c_int),
+        ("height", c_int),
+        ("pixelPacking", c_int),
+        ("bitsPerPixel", c_int),
+        ("bytesPerPixel", c_int),
+        ("rowPadBytes", c_int),
+        ("rowSizeBytes", c_int),
+        ("imageFlip", c_int),
+        ("channelCount", c_int),
+        ("channelStart", c_int * 4),
+        ("bitsPerChannel", c_int * 4),
+        ("pxl", c_ubyte_p),
     ]
 
 
 class DmtxTime(Structure):
     _fields_ = [
-        ('sec', c_ulonglong),      # Actually a time_t
-        ('usec', c_ulong),
+        ("sec", c_ulonglong),  # Actually a time_t
+        ("usec", c_ulong),
     ]
 
 
 class DmtxPixelLoc(Structure):
     _fields_ = [
-        ('X', c_int),
-        ('Y', c_int),
+        ("X", c_int),
+        ("Y", c_int),
     ]
 
 
 class DmtxVector2(Structure):
     _fields_ = [
-        ('X', c_double),
-        ('Y', c_double),
+        ("X", c_double),
+        ("Y", c_double),
     ]
 
 
 class DmtxPointFlow(Structure):
     _fields_ = [
-        ('plane', c_int),
-        ('arrive', c_int),
-        ('depart', c_int),
-        ('mag', c_int),
-        ('loc', DmtxPixelLoc),
+        ("plane", c_int),
+        ("arrive", c_int),
+        ("depart", c_int),
+        ("mag", c_int),
+        ("loc", DmtxPixelLoc),
     ]
 
 
 class DmtxBestLine(Structure):
     _fields_ = [
-        ('angle', c_int),
-        ('hOffset', c_int),
-        ('mag', c_int),
-        ('stepBeg', c_int),
-        ('stepPos', c_int),
-        ('stepNeg', c_int),
-        ('distSq', c_int),
-        ('devn', c_double),
-        ('locBeg', DmtxPixelLoc),
-        ('locPos', DmtxPixelLoc),
-        ('locNeg', DmtxPixelLoc),
+        ("angle", c_int),
+        ("hOffset", c_int),
+        ("mag", c_int),
+        ("stepBeg", c_int),
+        ("stepPos", c_int),
+        ("stepNeg", c_int),
+        ("distSq", c_int),
+        ("devn", c_double),
+        ("locBeg", DmtxPixelLoc),
+        ("locPos", DmtxPixelLoc),
+        ("locNeg", DmtxPixelLoc),
     ]
 
 
 class DmtxScanGrid(Structure):
     _fields_ = [
-        ('minExtent', c_int),
-        ('maxExtent', c_int),
-        ('xOffset', c_int),
-        ('yOffset', c_int),
-        ('xMin', c_int),
-        ('xMax', c_int),
-        ('yMin', c_int),
-        ('yMax', c_int),
-
-        ('total', c_int),
-        ('extent', c_int),
-        ('jumpSize', c_int),
-        ('pixelTotal', c_int),
-        ('startPos', c_int),
-
-        ('pixelCount', c_int),
-        ('xCenter', c_int),
-        ('yCenter', c_int),
+        ("minExtent", c_int),
+        ("maxExtent", c_int),
+        ("xOffset", c_int),
+        ("yOffset", c_int),
+        ("xMin", c_int),
+        ("xMax", c_int),
+        ("yMin", c_int),
+        ("yMax", c_int),
+        ("total", c_int),
+        ("extent", c_int),
+        ("jumpSize", c_int),
+        ("pixelTotal", c_int),
+        ("startPos", c_int),
+        ("pixelCount", c_int),
+        ("xCenter", c_int),
+        ("yCenter", c_int),
     ]
 
 
-if version.parse(dmtxVersion()) < version.parse('0.7.5'):
+if LooseVersion(dmtxVersion()) < LooseVersion("0.7.5"):
+
     class DmtxDecode(Structure):
         _fields_ = [
-            ('edgeMin', c_int),
-            ('edgeMax', c_int),
-            ('scanGap', c_int),
-            ('squareDevn', c_double),
-            ('sizeIdxExpected', c_int),
-            ('edgeThresh', c_int),
-
-            ('xMin', c_int),
-            ('xMax', c_int),
-            ('yMin', c_int),
-            ('yMax', c_int),
-            ('scale', c_int),
-
-            ('cache', c_ubyte_p),
-            ('image', POINTER(DmtxImage)),
-            ('grid', DmtxScanGrid),
+            ("edgeMin", c_int),
+            ("edgeMax", c_int),
+            ("scanGap", c_int),
+            ("squareDevn", c_double),
+            ("sizeIdxExpected", c_int),
+            ("edgeThresh", c_int),
+            ("xMin", c_int),
+            ("xMax", c_int),
+            ("yMin", c_int),
+            ("yMax", c_int),
+            ("scale", c_int),
+            ("cache", c_ubyte_p),
+            ("image", POINTER(DmtxImage)),
+            ("grid", DmtxScanGrid),
         ]
+
 else:
+
     class DmtxDecode(Structure):
         _fields_ = [
-            ('edgeMin', c_int),
-            ('edgeMax', c_int),
-            ('scanGap', c_int),
-            ('fnc1', c_int),           # libdmtx 0.7.5 inserts this field
-            ('squareDevn', c_double),
-            ('sizeIdxExpected', c_int),
-            ('edgeThresh', c_int),
-
-            ('xMin', c_int),
-            ('xMax', c_int),
-            ('yMin', c_int),
-            ('yMax', c_int),
-            ('scale', c_int),
-
-            ('cache', c_ubyte_p),
-            ('image', POINTER(DmtxImage)),
-            ('grid', DmtxScanGrid),
+            ("edgeMin", c_int),
+            ("edgeMax", c_int),
+            ("scanGap", c_int),
+            ("fnc1", c_int),  # libdmtx 0.7.5 inserts this field
+            ("squareDevn", c_double),
+            ("sizeIdxExpected", c_int),
+            ("edgeThresh", c_int),
+            ("xMin", c_int),
+            ("xMax", c_int),
+            ("yMin", c_int),
+            ("yMax", c_int),
+            ("scale", c_int),
+            ("cache", c_ubyte_p),
+            ("image", POINTER(DmtxImage)),
+            ("grid", DmtxScanGrid),
         ]
 
 
 class DmtxRegion(Structure):
     _fields_ = [
-        ('jumpToPos', c_int),
-        ('jumpToNeg', c_int),
-        ('stepsTotal', c_int),
-        ('finalPos', DmtxPixelLoc),
-        ('finalNeg', DmtxPixelLoc),
-        ('boundMin', DmtxPixelLoc),
-        ('boundMax', DmtxPixelLoc),
-        ('flowBegin', DmtxPointFlow),
-
-        ('polarity', c_int),
-        ('stepR', c_int),
-        ('stepT', c_int),
-        ('locR', DmtxPixelLoc),
-        ('locT', DmtxPixelLoc),
-
-        ('leftKnown', c_int),
-        ('leftAngle', c_int),
-        ('leftLoc', DmtxPixelLoc),
-        ('leftLine', DmtxBestLine),
-        ('bottomKnown', c_int),
-        ('bottomAngle', c_int),
-        ('bottomLoc', DmtxPixelLoc),
-        ('bottomLine', DmtxBestLine),
-        ('topKnown', c_int),
-        ('topAngle', c_int),
-        ('topLoc', DmtxPixelLoc),
-        ('rightKnown', c_int),
-        ('rightAngle', c_int),
-        ('rightLoc', DmtxPixelLoc),
-
-        ('onColor', c_int),
-        ('offColor', c_int),
-        ('sizeIdx', c_int),
-        ('symbolRows', c_int),
-        ('symbolCols', c_int),
-        ('mappingRows', c_int),
-        ('mappingCols', c_int),
-
-        ('raw2fit', DmtxMatrix3),
-        ('fit2raw', DmtxMatrix3),
+        ("jumpToPos", c_int),
+        ("jumpToNeg", c_int),
+        ("stepsTotal", c_int),
+        ("finalPos", DmtxPixelLoc),
+        ("finalNeg", DmtxPixelLoc),
+        ("boundMin", DmtxPixelLoc),
+        ("boundMax", DmtxPixelLoc),
+        ("flowBegin", DmtxPointFlow),
+        ("polarity", c_int),
+        ("stepR", c_int),
+        ("stepT", c_int),
+        ("locR", DmtxPixelLoc),
+        ("locT", DmtxPixelLoc),
+        ("leftKnown", c_int),
+        ("leftAngle", c_int),
+        ("leftLoc", DmtxPixelLoc),
+        ("leftLine", DmtxBestLine),
+        ("bottomKnown", c_int),
+        ("bottomAngle", c_int),
+        ("bottomLoc", DmtxPixelLoc),
+        ("bottomLine", DmtxBestLine),
+        ("topKnown", c_int),
+        ("topAngle", c_int),
+        ("topLoc", DmtxPixelLoc),
+        ("rightKnown", c_int),
+        ("rightAngle", c_int),
+        ("rightLoc", DmtxPixelLoc),
+        ("onColor", c_int),
+        ("offColor", c_int),
+        ("sizeIdx", c_int),
+        ("symbolRows", c_int),
+        ("symbolCols", c_int),
+        ("mappingRows", c_int),
+        ("mappingCols", c_int),
+        ("raw2fit", DmtxMatrix3),
+        ("fit2raw", DmtxMatrix3),
     ]
 
 
-if version.parse(dmtxVersion()) < version.parse('0.7.5'):
+if LooseVersion(dmtxVersion()) < LooseVersion("0.7.5"):
+
     class DmtxEncode(Structure):
         _fields_ = [
-            ('method', c_int),
-            ('scheme', c_int),
-            ('sizeIdxRequest', c_int),
-            ('marginSize', c_int),
-            ('moduleSize', c_int),
-            ('pixelPacking', c_int),
-            ('imageFlip', c_int),
-            ('rowPadBytes', c_int),
-            ('message', POINTER(DmtxMessage)),
-            ('image', POINTER(DmtxImage)),
-            ('region', DmtxRegion),
-            ('xfrm', DmtxMatrix3),
-            ('rxfrm', DmtxMatrix3),
+            ("method", c_int),
+            ("scheme", c_int),
+            ("sizeIdxRequest", c_int),
+            ("marginSize", c_int),
+            ("moduleSize", c_int),
+            ("pixelPacking", c_int),
+            ("imageFlip", c_int),
+            ("rowPadBytes", c_int),
+            ("message", POINTER(DmtxMessage)),
+            ("image", POINTER(DmtxImage)),
+            ("region", DmtxRegion),
+            ("xfrm", DmtxMatrix3),
+            ("rxfrm", DmtxMatrix3),
         ]
+
 else:
+
     class DmtxEncode(Structure):
         _fields_ = [
-            ('method', c_int),
-            ('scheme', c_int),
-            ('sizeIdxRequest', c_int),
-            ('marginSize', c_int),
-            ('moduleSize', c_int),
-            ('pixelPacking', c_int),
-            ('imageFlip', c_int),
-            ('rowPadBytes', c_int),
-            ('fnc1', c_int),            # libdmtx 0.7.5 inserts this field
-            ('message', POINTER(DmtxMessage)),
-            ('image', POINTER(DmtxImage)),
-            ('region', DmtxRegion),
-            ('xfrm', DmtxMatrix3),
-            ('rxfrm', DmtxMatrix3),
+            ("method", c_int),
+            ("scheme", c_int),
+            ("sizeIdxRequest", c_int),
+            ("marginSize", c_int),
+            ("moduleSize", c_int),
+            ("pixelPacking", c_int),
+            ("imageFlip", c_int),
+            ("rowPadBytes", c_int),
+            ("fnc1", c_int),  # libdmtx 0.7.5 inserts this field
+            ("message", POINTER(DmtxMessage)),
+            ("image", POINTER(DmtxImage)),
+            ("region", DmtxRegion),
+            ("xfrm", DmtxMatrix3),
+            ("rxfrm", DmtxMatrix3),
         ]
 
 
 # Function signatures
 
-dmtxTimeNow = libdmtx_function('dmtxTimeNow', DmtxTime)
+dmtxTimeNow = libdmtx_function("dmtxTimeNow", DmtxTime)
 
 dmtxTimeAdd = libdmtx_function(
-    'dmtxTimeAdd',
-    DmtxTime,
-    DmtxTime,    # t
-    c_long       # msec
+    "dmtxTimeAdd", DmtxTime, DmtxTime, c_long  # t  # msec
 )
 
 dmtxDecodeCreate = libdmtx_function(
-    'dmtxDecodeCreate',
+    "dmtxDecodeCreate",
     POINTER(DmtxDecode),
-    POINTER(DmtxImage),    # img
-    c_int,      # scale
+    POINTER(DmtxImage),  # img
+    c_int,  # scale
 )
 
 dmtxDecodeDestroy = libdmtx_function(
-    'dmtxDecodeDestroy',
-    DmtxPassFail,
-    POINTER(POINTER(DmtxDecode))
+    "dmtxDecodeDestroy", DmtxPassFail, POINTER(POINTER(DmtxDecode))
 )
 
 
 dmtxDecodeSetProp = libdmtx_function(
-    'dmtxDecodeSetProp',
+    "dmtxDecodeSetProp",
     DmtxPassFail,
     POINTER(DmtxDecode),
-    c_int,    # prop
-    c_int     # value
+    c_int,  # prop
+    c_int,  # value
 )
 
 dmtxImageCreate = libdmtx_function(
-    'dmtxImageCreate',
+    "dmtxImageCreate",
     POINTER(DmtxImage),
-    POINTER(c_ubyte),    # pxl
-    c_int,     # width
-    c_int,     # height
-    c_int      # pack
+    POINTER(c_ubyte),  # pxl
+    c_int,  # width
+    c_int,  # height
+    c_int,  # pack
 )
 
 dmtxImageDestroy = libdmtx_function(
-    'dmtxImageDestroy',
-    DmtxPassFail,
-    POINTER(POINTER(DmtxImage))
+    "dmtxImageDestroy", DmtxPassFail, POINTER(POINTER(DmtxImage))
 )
 
 dmtxRegionFindNext = libdmtx_function(
-    'dmtxRegionFindNext',
+    "dmtxRegionFindNext",
     POINTER(DmtxRegion),
     POINTER(DmtxDecode),
-    POINTER(DmtxTime)    # timeout
+    POINTER(DmtxTime),  # timeout
 )
 
 dmtxDecodeMatrixRegion = libdmtx_function(
-    'dmtxDecodeMatrixRegion',
+    "dmtxDecodeMatrixRegion",
     POINTER(DmtxMessage),
-    POINTER(DmtxDecode),    # dec
-    POINTER(DmtxRegion),    # reg
-    c_int,                  # fix
+    POINTER(DmtxDecode),  # dec
+    POINTER(DmtxRegion),  # reg
+    c_int,  # fix
 )
 
 dmtxMatrix3VMultiplyBy = libdmtx_function(
-    'dmtxMatrix3VMultiplyBy',
+    "dmtxMatrix3VMultiplyBy",
     c_int,
     POINTER(DmtxVector2),
     DmtxMatrix3,
 )
 
 dmtxMessageDestroy = libdmtx_function(
-    'dmtxMessageDestroy',
-    DmtxPassFail,
-    POINTER(POINTER(DmtxMessage))
+    "dmtxMessageDestroy", DmtxPassFail, POINTER(POINTER(DmtxMessage))
 )
 
 dmtxRegionDestroy = libdmtx_function(
-    'dmtxRegionDestroy',
-    DmtxPassFail,
-    POINTER(POINTER(DmtxRegion))
+    "dmtxRegionDestroy", DmtxPassFail, POINTER(POINTER(DmtxRegion))
 )
 
 dmtxImageGetProp = libdmtx_function(
-    'dmtxImageGetProp',
+    "dmtxImageGetProp",
     c_int,
     POINTER(DmtxImage),
     c_int,  # prop
 )
 
 dmtxEncodeCreate = libdmtx_function(
-    'dmtxEncodeCreate',
+    "dmtxEncodeCreate",
     POINTER(DmtxEncode),
 )
 
 dmtxEncodeDestroy = libdmtx_function(
-    'dmtxEncodeDestroy',
-    DmtxPassFail,
-    POINTER(POINTER(DmtxEncode))
+    "dmtxEncodeDestroy", DmtxPassFail, POINTER(POINTER(DmtxEncode))
 )
 
 dmtxEncodeSetProp = libdmtx_function(
-    'dmtxEncodeSetProp',
+    "dmtxEncodeSetProp",
     DmtxPassFail,
     POINTER(DmtxEncode),
-    c_int,    # prop
-    c_int     # value
+    c_int,  # prop
+    c_int,  # value
 )
 
 dmtxEncodeDataMatrix = libdmtx_function(
-    'dmtxEncodeDataMatrix',
+    "dmtxEncodeDataMatrix",
     DmtxPassFail,
     POINTER(DmtxEncode),
     c_int,
-    POINTER(c_ubyte)
+    POINTER(c_ubyte),
+)
+
+dmtxDecodeGetPixelValue = libdmtx_function(
+    "dmtxDecodeGetPixelValue",
+    DmtxPassFail,
+    POINTER(DmtxDecode),
+    c_int,
+    c_int,
+    c_int,
+    POINTER(c_int),
 )

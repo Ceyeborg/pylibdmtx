@@ -2,12 +2,11 @@
 """
 import platform
 import sys
-
 from ctypes import cdll
 from ctypes.util import find_library
 from pathlib import Path
 
-__all__ = ['load']
+__all__ = ["load"]
 
 
 def _windows_fname():
@@ -16,13 +15,12 @@ def _windows_fname():
 
     This logic has its own function to make testing easier
     """
-    return 'libdmtx-64.dll' if sys.maxsize > 2**32 else 'libdmtx-32.dll'
+    return "libdmtx-64.dll" if sys.maxsize > 2**32 else "libdmtx-32.dll"
 
 
 def load():
-    """Loads the libdmtx shared library.
-    """
-    if 'Windows' == platform.system():
+    """Loads the libdmtx shared library."""
+    if "Windows" == platform.system():
         # Possible scenarios here
         #   1. Run from source, DLLs are in pylibdmtx directory
         #       cdll.LoadLibrary() imports DLLs in repo root directory
@@ -40,11 +38,18 @@ def load():
             libdmtx = cdll.LoadLibrary(
                 str(Path(__file__).parent.joinpath(fname))
             )
+    elif "Darwin" == platform.system():
+        try:
+            libdmtx = cdll.LoadLibrary("/opt/homebrew/lib/libdmtx.dylib")
+        except OSError:
+            raise ImportError(
+                f"{platform.system()}: Unable to find dmtx shared library"
+            )
     else:
         # Assume a shared library on the path
-        path = find_library('dmtx')
+        path = find_library("dmtx")
         if not path:
-            raise ImportError('Unable to find dmtx shared library')
+            raise ImportError("Unable to find dmtx shared library")
         libdmtx = cdll.LoadLibrary(path)
 
     return libdmtx
