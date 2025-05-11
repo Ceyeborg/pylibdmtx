@@ -1,5 +1,5 @@
 pylibdmtx-gs1grader
-=========
+===================
 This is a fork of [pylibdmtx](https://github.com/NaturalHistoryMuseum/pylibdmtx/) that adds the capability to extract extra information from decoder to grade the quality of data matrix barcodes.
 
 Key changes:
