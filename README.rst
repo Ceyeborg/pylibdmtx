@@ -1,6 +1,6 @@
-pylibdmtx
+pylibdmtx-gs1grader
 =========
-This is a fork of pylibdmtx that adds the capability to extract extra information from decoder to grade the quality of data matrix barcodes.
+This is a fork of [pylibdmtx](https://github.com/NaturalHistoryMuseum/pylibdmtx/) that adds the capability to extract extra information from decoder to grade the quality of data matrix barcodes.
 
 Key changes:
 
@@ -52,12 +52,6 @@ Linux:
 
    sudo apt-get install libdmtx0a
 
-The PyPI package is currently out-of-date; to install the latest version, use:
-
-::
-
-    pip install git+https://github.com/NaturalHistoryMuseum/pylibdmtx.git
-
 To use the
 ``read_datamatrix`` and ``write_datamatrix`` command-line scripts, you will also need to install Pillow >= 3.2.0:
 
@@ -65,12 +59,11 @@ To use the
 
     pip install "Pillow>=3.2.0"
 
-If you want to install the outdated package from PyPI:
+If you want to install the package from PyPI:
 
 ::
 
-   pip install pylibdmtx
-   pip install pylibdmtx[scripts]
+   pip install pylibdmtx-gs1grader
 
 Example usage
 -------------

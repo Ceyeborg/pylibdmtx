@@ -9,7 +9,7 @@ SCRIPTS = ['read_datamatrix', 'write_datamatrix']
 # Optional dependency
 PILLOW = 'Pillow>=3.2.0'
 
-URL = 'https://github.com/NaturalHistoryMuseum/pylibdmtx/'
+URL = 'https://github.com/Ceyeborg/pylibdmtx'
 
 
 def readme():
@@ -22,13 +22,13 @@ def readme():
 
 
 setup_data = {
-    'name': 'pylibdmtx',
+    'name': 'pylibdmtx-gs1grader',
     'version': pylibdmtx.__version__,
-    'author': 'Lawrence Hudson',
-    'author_email': 'quicklizard@googlemail.com',
+    'author': 'Ceyeb.org(Forked from NaturalHistoryMuseum)',
+    'author_email': 'info@ceyeb.org',
     'url': URL,
     'license': 'MIT',
-    'description': pylibdmtx.__doc__,
+    'description': 'Fork of NaturalHistoryMuseum pylibdmtx with GS1 extensions',
     'long_description': readme(),
     'long_description_content_type': 'text/x-rst',
     'packages': ['pylibdmtx', 'pylibdmtx.scripts', 'pylibdmtx.tests'],
@@ -69,6 +69,10 @@ setup_data = {
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
     ],
+    'project_urls': {
+        "Original Project": "https://github.com/NaturalHistoryMuseum/pylibdmtx/",
+        "Forked Project": "https://github.com/Ceyeborg/pylibdmtx",
+    },
 }
 
 
