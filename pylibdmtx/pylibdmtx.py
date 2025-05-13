@@ -151,7 +151,7 @@ def _region(decoder, timeout):
 
 @contextmanager
 def _decoded_matrix_region(decoder, region, corrections):
-    """A context manager for `DmtxMessage`, created and destoyed by
+    """A context manager for `DmtxMessage`, created and destroyed by
     `dmtxDecodeMatrixRegion` and `dmtxMessageDestroy`.
 
     Args:

@@ -90,7 +90,7 @@ _dmtxVersion = libdmtx_function("dmtxVersion", c_char_p)
 
 
 def dmtxVersion():
-    """Returns the version of the libdmtx libraray
+    """Returns the version of the libdmtx library
 
     Returns:
         str: Version string

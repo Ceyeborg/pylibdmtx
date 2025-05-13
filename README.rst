@@ -4,9 +4,9 @@ This is a fork of [pylibdmtx](https://github.com/NaturalHistoryMuseum/pylibdmtx/
 
 Key changes:
 
-- Introduce _pixels_fit_and_raw_data function to extract the fit and raw array from decoder.
-- Introduce dmtxDecodeGetPixelValue in wrapper.py to extract details on fit and raw arrays.
-- Introduce sampling_rate argument in decode() function, to control th size of fit and raw arrays.
+- Introduce `_pixels_fit_and_raw_data` function to extract the fit and raw array from decoder.
+- Introduce `dmtxDecodeGetPixelValue` in wrapper.py to extract details on fit and raw arrays.
+- Introduce `sampling_rate` argument in `decode()` function, to control the size of fit and raw arrays.
 
 .. image:: https://img.shields.io/badge/python-2.7%2C%203.5%2C%203.6%2C%203.7%2C%203.8%2C%203.9%2C%203.10-blue.svg
     :target: https://github.com/NaturalHistoryMuseum/pylibdmtx
@@ -129,7 +129,7 @@ Feel free to submit a PR to address any of these.
    `pydmtxmodule.c <https://sourceforge.net/p/libdmtx/dmtx-wrappers/ci/master/tree/python/>`__); there might be more of ``libdmtx``\ ’s functionality that could usefully
    be exposed
 
--  I exposed the bare minimum of functions, defines, enums and typedefs neede to
+-  I exposed the bare minimum of functions, defines, enums and typedefs needed to
    reimplement ``pydmtx``\ ’s ``decode`` function
 
 Contributors
